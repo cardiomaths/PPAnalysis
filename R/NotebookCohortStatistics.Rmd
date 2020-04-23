@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r setup, include=FALSE, echo=FALSE}
+
+ 
+```
+
+
+Load data
+```{r}
+
+    df <-
+      read.csv('../outputs/CurveFitting/summaryFileCohort1V1.csv',
+               stringsAsFactors = FALSE,
+               header = TRUE)
+    df <- subset(df, DirtyStatus != "Dirty")
+    df[df$agonist=="TRAP-6","agonist"]<-"TRAP"
+    df[df$output=="P-selectin","output"]<-"Pselectin"
+    
+    #df <- subset(df, agonist != "epinephrine")
+    #df <- subset(df, agonist != "U46619")
+    df <- subset(df, measure == "MedianFI") 
+    
+    df <- df[,c("donor","output","agonist","Sensitivity","Capacity")]
+    
+    df$wrapfacilitator <- paste(df$output, df$agonist,sep="_")
+    df <- df[,c("donor","Sensitivity","Capacity", "wrapfacilitator")]
+
+    df.sens <- df[,c("wrapfacilitator", "Sensitivity")]
+    df.sens <- na.omit(df.sens)
+
+    df.cap <- df[,c("wrapfacilitator", "Capacity")]
+    df.cap <- na.omit(df.cap)
+
+    df.tab <- df.sens[!duplicated(df.sens$wrapfacilitator), c("wrapfacilitator")]
+    
+  df.tab$sensLower <- aggregate(df.sens[, 2], list(df.sens$wrapfacilitator), FUN=quantile, probs=0.25)
+  df.tab$sensUpper <- aggregate(df.sens[, 2], list(df.sens$wrapfacilitator), FUN=quantile, probs=0.75)
+  df.tab$sensMedian <- aggregate(df.sens[, 2], list(df.sens$wrapfacilitator), median)
+
+    df.tab$capLower <- aggregate(df.cap[, 2], list(df.cap$wrapfacilitator), FUN=quantile, probs=0.25)
+  df.tab$capUpper <- aggregate(df.cap[, 2], list(df.cap$wrapfacilitator), FUN=quantile, probs=0.75)
+  df.tab$capMedian <- aggregate(df.cap[, 2], list(df.cap$wrapfacilitator), median)
+    
+ print(df.tab)
+
+```
+

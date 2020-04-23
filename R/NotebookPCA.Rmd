@@ -1,0 +1,120 @@
+---
+title: "Principle Component Analysis (PCA)"
+output: html_notebook
+---
+
+
+````{r setup}
+
+library(tidyr)
+library(factoextra)
+library(FactoMineR)
+
+```
+
+Load up the summary files 
+```{r}
+
+    df <-
+      read.csv('../outputs/SummaryStats/summaryFileCohort1V2.csv',
+               stringsAsFactors = FALSE,
+               header = TRUE)
+
+```
+
+Restrict and subset dataframes
+```{r}
+
+    df <- subset(df, measure == "MedianFI")
+    df <- df[,c("donor","output","agonist","Sensitivity","Capacity")]
+    
+    #Exclude unwanted data
+    df <- subset(df, agonist != "epinephrine")
+    df <- subset(df, agonist != "U46619")
+
+    #Removing hyphens from variable names
+    df[df$agonist=="TRAP-6","agonist"]<-"TRAP"
+    df[df$output=="P-selectin","output"]<-"Pselectin"
+
+```
+
+
+Reshape the data
+```{r}
+
+df.temp <-
+      gather(df, desc, metric, c("Sensitivity", "Capacity"))
+
+df.temp$wrapfacilitator <- paste(df.temp$output, df.temp$desc, df.temp$agonist,sep="_")
+df.temp <- df.temp[,c("donor","wrapfacilitator","metric")]
+
+df.wide <- spread(df.temp, wrapfacilitator, metric)
+df.wide <- df.wide %>% drop_na()
+
+df.wide.res <- as.data.frame(scale(df.wide[,-1]))
+rownames(df.wide.res) <- df.wide[,1]
+df.wide <- cbind(df.wide[,1],df.wide.res)
+
+```
+
+
+There are multiple functions for PCA
+```{r}
+
+pca <- prcomp(df.wide.res, scale=TRUE)
+pca.alt <- princomp(df.wide.res)
+
+print(summary(pca))
+print(summary(pca.alt))
+```
+
+
+```{r}
+
+p <- fviz_eig(pca, 
+              addlabels = TRUE, 
+              hjust = -0.3,
+              barfill="white", 
+              barcolor ="darkblue",
+              linecolor ="red") + 
+  ylim(0, 50) +
+  theme_minimal()
+p + 
+  labs(title = "Screeplot - Methods",
+         x = "Principal Components", y = "% of variances")
+
+#dev.off()
+```
+In this dataset 3 components explain 85% of the variability. Most of the variation is captured in the first two components. 
+
+Lets look at component 1 and 2
+```{r fig.height=5, fig.width=8}
+
+fviz_pca_var(pca.alt)
+
+```
+
+Dimension 1 and 3
+```{r fig.height=5, fig.width=8}
+
+fviz_pca_var(pca.alt, axes = c(1, 3))
+
+```
+The third component divides Sensitivity differently to Capacity.
+For measures of Sensitivity responses to ADP and TRAP are correlated while those for CRP are distinct. For measures of Capacity all fibrinogen responses show some similarity and are distinct from P-selectin.
+
+
+Placing the donors on the plane of Dimension 1 and 2
+```{r fig.height=5, fig.width=8}
+
+fviz_pca_ind(pca, 
+             geom="text",
+             repel = TRUE 
+             ) +
+xlab(expression("low responder" %<->% "high responder")) +
+ylab(expression("higher capacity" %<->% "higher sensitivity")) +
+labs(title ="Principal components 1 & 2")  +
+     theme_minimal() + theme(legend.position="none", text = element_text(size=15), plot.title = element_text(hjust = 0.5, vjust=3))
+
+```
+
