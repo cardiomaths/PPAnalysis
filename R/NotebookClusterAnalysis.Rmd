@@ -19,7 +19,7 @@ Load the final summary file
 ```{r}
 
     df <- 
-    read.csv('../outputs/Barcode/summaryFileTestV3.csv',
+    read.csv('../outputs/Barcode/summaryFileCohort1V3.csv',
              stringsAsFactors = FALSE,
              header = TRUE)
 
