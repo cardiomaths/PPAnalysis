@@ -431,7 +431,7 @@ processData <-
                    at = xlabels ,
                    labels = xlabels,
                    mgp = c(0, .1, 0))
-              if (axisControl != "None") {
+              if (axisControl != "none") {
                 axis.break(1, break1, style = "slash", brw = 0.06)
               }
               
