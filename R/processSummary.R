@@ -146,7 +146,7 @@ processSummary <-
           ifelse(df.save.cap$value < df.save.cap$lower,
                  df.save.cap$lower,
                  df.save.cap$value)
-        
+
         # Create plot to assess assay consistency over time ---------
         plot1 <- ggplot(df.plot.long, aes(x = date, y = value)) +
           geom_point(aes(colour = factor(plate)), size = 0.5) +
@@ -185,9 +185,13 @@ processSummary <-
         
         dev.off()
 
-        
+        #df.tt <- df.plot.long 
         df.tt <- subset(df.plot.long, agonist != "epinephrine") 
-        df.tt <- subset(df.tt, agonist != "U46619") 
+        df.tt <- subset(df.tt, agonist != "U46619")
+        if (nrow(df.tt) == 0) {
+          print(paste("Not enough data for some summary stats. Measures:",measures[i],'Outputs:',outputs[p]))
+        } else {
+          
         # Create plot to assess assay consistency over time ---------
         plot1 <- ggplot(df.tt, aes(x = date, y = value)) +
           geom_point(aes(colour = factor(plate)), size = 0.5) +
@@ -226,7 +230,7 @@ processSummary <-
         print(plot1)
         
         dev.off()
-        
+
         # Create Plot demonstrating cohort variation ------------
         plot2 <-
           ggplot(df.plot.long, aes(x = factor(agonist), y = value)) +
@@ -290,7 +294,18 @@ processSummary <-
         print(plot2)
         
         dev.off()
-        
+
+        agonistTest <- df.plot.long[!duplicated(df.plot.long$agonist), c("agonist")]
+        testFlag <- 'pass'
+        for (t in 1:length(agonistTest)) {
+          if (nrow(df.plot.long[df.plot.long$agonist == agonistTest[t],])) {
+            testFlag <- 'fail'
+          }
+        }
+        if (testFlag == 'fail') {
+          print(paste("Not enough data for some summary stats. Measures:",measures[i],'Outputs:',outputs[p]))
+        } else
+            {
         # Create Plot demonstrating cohort distributions ----------
         plot3 <- ggplot(df.plot.long, aes(x = value)) +
           #geom_histogram(bins=20) +
@@ -382,7 +397,8 @@ processSummary <-
         )
         
         dev.off()
-        
+ 
+        }}
         #delete columns --------
         df.plot.cap <-
           df.plot.cap[, which(names(df.plot.cap) != "lower")]
